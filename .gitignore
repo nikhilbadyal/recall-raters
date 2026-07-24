@@ -1,0 +1,19 @@
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Anki add-on build output directory
+dist/
+*.ankiaddon
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# IDE and OS metadata files
+.DS_Store
+.vscode/
+.idea/

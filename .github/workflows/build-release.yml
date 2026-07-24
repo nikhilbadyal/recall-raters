@@ -1,0 +1,75 @@
+# GitHub Actions Workflow: Build & Release Anki Add-on Archive
+name: Build & Release Anki Add-on
+
+# Triggers: Runs on pushes to main branch, pull requests, version tags, or manual invocation
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Grant write permissions for contents to allow release creation
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build .ankiaddon Package
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.11 environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Step 3: Run Python packaging script to create dist/recall_raters.ankiaddon
+      - name: Package Anki Add-on
+        run: |
+          # Execute build script to create .ankiaddon zip archive
+          python3 scripts/build_addon.py
+
+      # Step 4: Upload build artifact so it can be downloaded from Action summary
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: recall_raters.ankiaddon
+          path: dist/recall_raters.ankiaddon
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    # Only run release creation when pushing a version tag (e.g. v1.0.0)
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download previously built artifact
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: recall_raters.ankiaddon
+          path: dist
+
+      # Step 3: Publish release to GitHub Releases with .ankiaddon asset
+      - name: Release to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/recall_raters.ankiaddon
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
