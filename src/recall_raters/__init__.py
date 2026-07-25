@@ -395,22 +395,19 @@ def on_will_answer_card(ease_tuple, reviewer, card):
     good_limit = config["good_max_seconds"]
     hard_limit = config["hard_max_seconds"]
 
-    # Enforce strict time-capped thresholds based on recall latency
-    if elapsed > hard_limit:
-        # Time exceeded hard limit (>10s): Force rating to Again (1)
-        enforced_ease = 1
-    elif elapsed > good_limit:
-        # Time exceeded good limit (>5s): Cap maximum rating to Hard (2)
-        enforced_ease = min(original_ease, 2)
-    elif elapsed > easy_limit:
-        # Time exceeded easy limit (>2s): Cap maximum rating to Good (3)
-        enforced_ease = min(original_ease, 3)
-    else:
-        # Time <= easy limit (<=2s): Full range of ratings allowed
-        enforced_ease = original_ease
+    # Cancel rating submission if user presses shortcut key for a disabled ease rating
+    if original_ease == 4 and elapsed > easy_limit:
+        # 'Easy' (4) rating is disabled (> 2.0s latency): Block shortcut keypress completely
+        return (False, original_ease)
+    elif original_ease == 3 and elapsed > good_limit:
+        # 'Good' (3) rating is disabled (> 5.0s latency): Block shortcut keypress completely
+        return (False, original_ease)
+    elif original_ease == 2 and elapsed > hard_limit:
+        # 'Hard' (2) rating is disabled (> 10.0s latency): Block shortcut keypress completely
+        return (False, original_ease)
 
-    # Return modified tuple containing boolean flag and time-enforced rating
-    return (ease_tuple[0], enforced_ease)
+    # Allowed rating: Permit card answering with requested rating
+    return (True, original_ease)
 
 # Import Qt GUI widget modules for custom settings dialog
 from aqt.qt import (
