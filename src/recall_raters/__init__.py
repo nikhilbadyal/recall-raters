@@ -412,6 +412,97 @@ def on_will_answer_card(ease_tuple, reviewer, card):
     # Return modified tuple containing boolean flag and time-enforced rating
     return (ease_tuple[0], enforced_ease)
 
+# Import Qt GUI widget modules for custom settings dialog
+from aqt.qt import (
+    QDialog,
+    QVBoxLayout,
+    QFormLayout,
+    QDoubleSpinBox,
+    QCheckBox,
+    QLabel,
+    QDialogButtonBox,
+)
+
+def show_config_dialog():
+    """
+    Displays a graphical PyQt Settings dialog allowing the user to configure custom time thresholds
+    (Easy max seconds, Good max seconds, Hard max seconds) and feature toggles.
+    """
+    if not mw:
+        return
+
+    # Retrieve current active configuration dictionary
+    config = get_config()
+
+    # Instantiate QDialog parented to Anki main window
+    dialog = QDialog(mw)
+    dialog.setWindowTitle("Recall Raters Settings")
+    dialog.setMinimumWidth(380)
+
+    layout = QVBoxLayout()
+    form_layout = QFormLayout()
+
+    # Easy Max Seconds SpinBox input control
+    easy_spin = QDoubleSpinBox()
+    easy_spin.setRange(0.1, 300.0)
+    easy_spin.setSingleStep(0.5)
+    easy_spin.setSuffix(" s")
+    easy_spin.setValue(config["easy_max_seconds"])
+    form_layout.addRow(QLabel("Easy Max Time (sec):"), easy_spin)
+
+    # Good Max Seconds SpinBox input control
+    good_spin = QDoubleSpinBox()
+    good_spin.setRange(0.1, 300.0)
+    good_spin.setSingleStep(0.5)
+    good_spin.setSuffix(" s")
+    good_spin.setValue(config["good_max_seconds"])
+    form_layout.addRow(QLabel("Good Max Time (sec):"), good_spin)
+
+    # Hard Max Seconds SpinBox input control
+    hard_spin = QDoubleSpinBox()
+    hard_spin.setRange(0.1, 300.0)
+    hard_spin.setSingleStep(0.5)
+    hard_spin.setSuffix(" s")
+    hard_spin.setValue(config["hard_max_seconds"])
+    form_layout.addRow(QLabel("Hard Max Time (sec):"), hard_spin)
+
+    # Feature Toggles Checkboxes
+    visual_check = QCheckBox("Enable visual button disabling")
+    visual_check.setChecked(config["enable_visual_disabling"])
+    form_layout.addRow(visual_check)
+
+    backend_check = QCheckBox("Enable backend shortcut enforcement")
+    backend_check.setChecked(config["enable_backend_enforcement"])
+    form_layout.addRow(backend_check)
+
+    layout.addLayout(form_layout)
+
+    # Qt5 / Qt6 compatible QDialogButtonBox setup
+    try:
+        save_flag = QDialogButtonBox.StandardButton.Save
+        cancel_flag = QDialogButtonBox.StandardButton.Cancel
+    except AttributeError:
+        save_flag = QDialogButtonBox.Save
+        cancel_flag = QDialogButtonBox.Cancel
+
+    button_box = QDialogButtonBox(save_flag | cancel_flag)
+    button_box.accepted.connect(dialog.accept)
+    button_box.rejected.connect(dialog.reject)
+    layout.addWidget(button_box)
+
+    dialog.setLayout(layout)
+
+    # If user clicks Save, write updated configuration to Anki Add-on Manager
+    if dialog.exec():
+        new_config = {
+            "easy_max_seconds": float(easy_spin.value()),
+            "good_max_seconds": float(good_spin.value()),
+            "hard_max_seconds": float(hard_spin.value()),
+            "enable_visual_disabling": bool(visual_check.isChecked()),
+            "enable_backend_enforcement": bool(backend_check.isChecked()),
+        }
+        mw.addonManager.writeConfig(__name__, new_config)
+
 # Register hook to capture when card question is rendered
 gui_hooks.reviewer_did_show_question.append(on_show_question)
 
@@ -420,3 +511,12 @@ gui_hooks.reviewer_did_show_answer.append(on_show_answer)
 
 # Register hook to intercept card rating submission before state update
 gui_hooks.reviewer_will_answer_card.append(on_will_answer_card)
+
+# Register custom GUI config action in Anki Add-on Manager
+if mw and hasattr(mw, "addonManager") and mw.addonManager:
+    mw.addonManager.setConfigAction(__name__, show_config_dialog)
+
+# Add menu action under Anki's main 'Tools' menu
+if mw and hasattr(mw, "form") and hasattr(mw.form, "menuTools"):
+    action = mw.form.menuTools.addAction("Recall Raters Settings...")
+    action.triggered.connect(show_config_dialog)
