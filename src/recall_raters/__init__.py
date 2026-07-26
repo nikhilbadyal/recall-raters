@@ -23,12 +23,12 @@ def get_config():
     
     # Return dictionary merged with robust fallback default threshold values
     return {
-        # Maximum seconds allowed to select 'Easy' (Default: 2.0s)
-        "easy_max_seconds": float(config.get("easy_max_seconds", 2.0)) if config else 2.0,
-        # Maximum seconds allowed to select 'Good' (Default: 5.0s)
-        "good_max_seconds": float(config.get("good_max_seconds", 5.0)) if config else 5.0,
-        # Maximum seconds allowed to select 'Hard' (Default: 10.0s)
-        "hard_max_seconds": float(config.get("hard_max_seconds", 10.0)) if config else 10.0,
+        # Maximum seconds allowed to select 'Easy' (Default: 2s)
+        "easy_max_seconds": int(config.get("easy_max_seconds", 2)) if config else 2,
+        # Maximum seconds allowed to select 'Good' (Default: 5s)
+        "good_max_seconds": int(config.get("good_max_seconds", 5)) if config else 5,
+        # Maximum seconds allowed to select 'Hard' (Default: 10s)
+        "hard_max_seconds": int(config.get("hard_max_seconds", 10)) if config else 10,
         # Whether to enable real-time JavaScript visual button disabling in bottom webview
         "enable_visual_disabling": bool(config.get("enable_visual_disabling", True)) if config else True,
         # Whether to enforce backend time caps on rating shortcut keypresses
@@ -414,7 +414,7 @@ from aqt.qt import (
     QDialog,
     QVBoxLayout,
     QFormLayout,
-    QDoubleSpinBox,
+    QSpinBox,
     QCheckBox,
     QLabel,
     QDialogButtonBox,
@@ -423,7 +423,7 @@ from aqt.qt import (
 def show_config_dialog():
     """
     Displays a graphical PyQt Settings dialog allowing the user to configure custom time thresholds
-    (Easy max seconds, Good max seconds, Hard max seconds) and feature toggles.
+    using natural whole numbers (integers: 2s, 5s, 10s) and feature toggles.
     """
     if not mw:
         return
@@ -439,28 +439,28 @@ def show_config_dialog():
     layout = QVBoxLayout()
     form_layout = QFormLayout()
 
-    # Easy Max Seconds SpinBox input control
-    easy_spin = QDoubleSpinBox()
-    easy_spin.setRange(0.1, 300.0)
-    easy_spin.setSingleStep(0.5)
+    # Easy Max Seconds SpinBox input control (integer natural numbers)
+    easy_spin = QSpinBox()
+    easy_spin.setRange(1, 300)
+    easy_spin.setSingleStep(1)
     easy_spin.setSuffix(" s")
-    easy_spin.setValue(config["easy_max_seconds"])
+    easy_spin.setValue(int(config["easy_max_seconds"]))
     form_layout.addRow(QLabel("Easy Max Time (sec):"), easy_spin)
 
-    # Good Max Seconds SpinBox input control
-    good_spin = QDoubleSpinBox()
-    good_spin.setRange(0.1, 300.0)
-    good_spin.setSingleStep(0.5)
+    # Good Max Seconds SpinBox input control (integer natural numbers)
+    good_spin = QSpinBox()
+    good_spin.setRange(1, 300)
+    good_spin.setSingleStep(1)
     good_spin.setSuffix(" s")
-    good_spin.setValue(config["good_max_seconds"])
+    good_spin.setValue(int(config["good_max_seconds"]))
     form_layout.addRow(QLabel("Good Max Time (sec):"), good_spin)
 
-    # Hard Max Seconds SpinBox input control
-    hard_spin = QDoubleSpinBox()
-    hard_spin.setRange(0.1, 300.0)
-    hard_spin.setSingleStep(0.5)
+    # Hard Max Seconds SpinBox input control (integer natural numbers)
+    hard_spin = QSpinBox()
+    hard_spin.setRange(1, 300)
+    hard_spin.setSingleStep(1)
     hard_spin.setSuffix(" s")
-    hard_spin.setValue(config["hard_max_seconds"])
+    hard_spin.setValue(int(config["hard_max_seconds"]))
     form_layout.addRow(QLabel("Hard Max Time (sec):"), hard_spin)
 
     # Feature Toggles Checkboxes
@@ -492,9 +492,9 @@ def show_config_dialog():
     # If user clicks Save, write updated configuration to Anki Add-on Manager
     if dialog.exec():
         new_config = {
-            "easy_max_seconds": float(easy_spin.value()),
-            "good_max_seconds": float(good_spin.value()),
-            "hard_max_seconds": float(hard_spin.value()),
+            "easy_max_seconds": int(easy_spin.value()),
+            "good_max_seconds": int(good_spin.value()),
+            "hard_max_seconds": int(hard_spin.value()),
             "enable_visual_disabling": bool(visual_check.isChecked()),
             "enable_backend_enforcement": bool(backend_check.isChecked()),
         }

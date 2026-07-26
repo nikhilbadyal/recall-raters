@@ -1,7 +1,7 @@
 {
-  "easy_max_seconds": 2.0,
-  "good_max_seconds": 5.0,
-  "hard_max_seconds": 10.0,
+  "easy_max_seconds": 2,
+  "good_max_seconds": 5,
+  "hard_max_seconds": 10,
   "enable_visual_disabling": true,
   "enable_backend_enforcement": true
 }
