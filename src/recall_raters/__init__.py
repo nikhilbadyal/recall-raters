@@ -176,7 +176,8 @@ def on_show_answer(card):
     Hook handler triggered when the user reveals the card answer.
     Stops the live timer, freezes the recall latency badge, and locks allowed rating buttons.
     """
-    global card_start_time, answer_reveal_time
+    # Only answer_reveal_time is reassigned here; card_start_time is read directly from module scope without global declaration
+    global answer_reveal_time
     answer_reveal_time = time.time()
     
     # Retrieve configuration values for time thresholds and visual features
@@ -371,7 +372,7 @@ def on_will_answer_card(ease_tuple, reviewer, card):
     Returns:
       Modified tuple (continue_answering, enforced_ease)
     """
-    global card_start_time, answer_reveal_time
+    # card_start_time and answer_reveal_time are only read (not mutated) in this scope, so no global statement is needed
     
     # Retrieve configuration thresholds
     config = get_config()
