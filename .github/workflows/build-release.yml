@@ -10,6 +10,12 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      publish_ankiweb:
+        description: 'Publish add-on to AnkiWeb (requires ANKIWEB_USERNAME & ANKIWEB_PASSWORD secrets)'
+        required: false
+        type: boolean
+        default: false
 
 # Grant write permissions for contents to allow release creation
 permissions:
@@ -73,3 +79,61 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-ankiweb:
+    name: Publish to AnkiWeb
+    needs: build
+    # Trigger AnkiWeb publication on version tag pushes or explicit manual workflow_dispatch invocation.
+    # Depends directly on 'build' so manual dispatches can publish without requiring a GitHub release tag.
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_ankiweb == true)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository to access README.md for the AnkiWeb shared listing description
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download the compiled .ankiaddon archive produced by the build job
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: recall_raters.ankiaddon
+          path: dist
+
+      # Step 3: Fail fast with clear setup instructions if credentials have not been configured
+      - name: Verify AnkiWeb Credentials
+        env:
+          # Bound to environment variables to avoid shell quotation breakage from special characters in credentials
+          ANKIWEB_USER: ${{ secrets.ANKIWEB_USERNAME }}
+          ANKIWEB_PASS: ${{ secrets.ANKIWEB_PASSWORD }}
+        run: |
+          if [ -z "$ANKIWEB_USER" ] || [ -z "$ANKIWEB_PASS" ]; then
+            echo "::error::Missing AnkiWeb credentials! Please add ANKIWEB_USERNAME and ANKIWEB_PASSWORD under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      # Step 4: Upload package to AnkiWeb shared add-on directory
+      - name: Upload Add-on to AnkiWeb
+        id: upload_ankiweb
+        # Uses danny900714/upload-anki-addon to interact with AnkiWeb's protobuf upload endpoint
+        uses: danny900714/upload-anki-addon@v1
+        with:
+          username: ${{ secrets.ANKIWEB_USERNAME }}
+          password: ${{ secrets.ANKIWEB_PASSWORD }}
+          # Support updating existing add-ons when an ID is stored, while omitting it on first publish to create a new entry
+          addon-id: ${{ vars.ANKIWEB_ADDON_ID || secrets.ANKIWEB_ADDON_ID || '' }}
+          title: "Recall Raters - Timer-Based Ease Disabler"
+          tags: "timer rating fsrs ease speed review anti-cheat"
+          support-page: "https://github.com/nikhilbadyal/recall-raters/issues"
+          # Require 2.1.20 minimum (when gui_hooks was added to Anki); '+' marks forward-compatibility with future releases
+          branches: "2.1.20-25.09.4+"
+          addon-files: "dist/recall_raters.ankiaddon"
+          description-file: "README.md"
+
+      # Step 5: Print resulting listing ID and URL to workflow summary
+      - name: Report Publication Details
+        run: |
+          # Log the registered add-on code to facilitate setting ANKIWEB_ADDON_ID for future updates
+          echo "Anki add-on successfully uploaded to AnkiWeb!"
+          echo "Add-on ID: ${{ steps.upload_ankiweb.outputs.addon-id }}"
+          echo "Listing URL: https://ankiweb.net/shared/info/${{ steps.upload_ankiweb.outputs.addon-id }}"

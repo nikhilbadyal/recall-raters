@@ -107,7 +107,12 @@ The compiled package will be saved in `dist/recall_raters.ankiaddon`, and `--ins
 ## 🤖 CI/CD Workflow
 
 The repository includes pre-configured GitHub Actions workflows:
-- **`build-release.yml`**: Automatically builds the `.ankiaddon` archive on every push and publishes release assets when a Git tag (e.g. `v1.0.0`) is pushed.
+- **`build-release.yml`**: Automatically builds the `.ankiaddon` archive on every push, creates GitHub Releases on version tags (e.g. `v1.0.0`), and automatically publishes to **AnkiWeb**.
+  - **Required Secrets**:
+    - `ANKIWEB_USERNAME`: Your AnkiWeb account username/email.
+    - `ANKIWEB_PASSWORD`: Your AnkiWeb account password.
+  - **Optional Variables / Secrets**:
+    - `ANKIWEB_ADDON_ID`: The numeric code assigned by AnkiWeb after the first upload (set this to update the existing add-on instead of creating a duplicate).
 - **`lint.yml`**: Runs `flake8` static code analysis to enforce clean Python syntax.
 
 ---
