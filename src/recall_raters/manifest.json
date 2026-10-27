@@ -1,5 +1,7 @@
 {
+  "package": "recall_raters",
   "name": "Recall Raters - Timer-Based Ease Disabler",
-  "human_name": "Recall Raters - Timer-Based Ease Disabler",
+  "human_version": "1.0.0",
+  "homepage": "https://github.com/nikhilbadyal/recall-raters",
   "mod": 1775000000
 }

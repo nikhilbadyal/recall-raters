@@ -2,12 +2,13 @@
 # Import standard argparse module to parse command-line arguments gracefully
 import argparse
 
-# Import os, sys, shutil, subprocess, and zipfile for OS process control and file operations
+# Import os, sys, shutil, subprocess, zipfile, and json for OS process control and file/manifest operations
 import os
 import sys
 import shutil
 import subprocess
 import zipfile
+import json
 from pathlib import Path
 
 def kill_anki_process():
@@ -133,6 +134,20 @@ def main():
         if not (src_dir / req_file).exists():
             print(f"Error: Required file '{req_file}' missing from {src_dir}", file=sys.stderr)
             sys.exit(1)
+
+    # Validate that manifest.json conforms to Anki's mandatory AddonManager schema
+    manifest_path = src_dir / "manifest.json"
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest_data = json.load(f)
+        # Anki's AddonManager strictly requires 'package' (subfolder name) and 'name' (display title)
+        missing_keys = [k for k in ("package", "name") if not manifest_data.get(k)]
+        if missing_keys:
+            print(f"Error: manifest.json is missing required Anki keys: {missing_keys}", file=sys.stderr)
+            sys.exit(1)
+    except Exception as err:
+        print(f"Error: Failed to read/parse manifest.json: {err}", file=sys.stderr)
+        sys.exit(1)
             
     # Create ZIP archive with deflate compression
     with zipfile.ZipFile(output_archive, "w", zipfile.ZIP_DEFLATED) as zipf:
