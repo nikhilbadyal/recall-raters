@@ -71,7 +71,7 @@ jobs:
 
       # Step 3: Publish release to GitHub Releases with .ankiaddon asset
       - name: Release to GitHub Releases
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/recall_raters.ankiaddon
           draft: false
