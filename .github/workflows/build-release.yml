@@ -45,7 +45,7 @@ jobs:
 
       # Step 4: Upload build artifact so it can be downloaded from Action summary
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: recall_raters.ankiaddon
           path: dist/recall_raters.ankiaddon
@@ -64,7 +64,7 @@ jobs:
 
       # Step 2: Download previously built artifact
       - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: recall_raters.ankiaddon
           path: dist
@@ -95,7 +95,7 @@ jobs:
 
       # Step 2: Download the compiled .ankiaddon archive produced by the build job
       - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: recall_raters.ankiaddon
           path: dist
